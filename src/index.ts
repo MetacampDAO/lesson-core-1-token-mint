@@ -1,36 +1,66 @@
 import { initializeKeypair } from "./initializeKeypair";
 import * as web3 from "@solana/web3.js";
+import {
+  burnTokens,
+  createNewMint,
+  createTokenAccount,
+  mintTokens,
+  transferTokens,
+} from "./utils";
 
 const main = async () => {
   const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
   const user = await initializeKeypair(connection);
 
-  // Step 1: Create a mint
-  // Create mint: https://solana-labs.github.io/solana-program-library/token/js/functions/createMint.html
-  // Let's create a createNewMint function in src/utils.ts
-  // We can create a mint by using the method createMint: Hint => Refer to the solana-labs spl github docs above
-
-  // Step 2: Find ATA of user
-  // Create mint: https://solana-labs.github.io/solana-program-library/token/js/functions/getOrCreateAssociatedTokenAccount.html
-  // Create a createTokenAccount function in src/utils.ts
-  // We can get or create an ata by using the method getOrCreateAssociatedTokenAccount: Hint => Refer to the solana-labs spl github docs above
-
-  // Step 3: Mint our token to the user ATA
-  // Create mint: https://solana-labs.github.io/solana-program-library/token/js/functions/mintTo.html
-  // Create a mintTokens function in src/utils.ts
-  // We can issue new token via the mint by using the method mintTo: Hint => Refer to the solana-labs spl github docs above
-  // For the mintTo method, you need the mintInfo which you can retrieve via the method getMint
+  console.log("PublicKey:", user.publicKey.toBase58());
 
   // Now that you have all 3 functions ready, let's put it together
   // createNewMint
-  // createTokenAccount
-  // mintTokens
+  const mint = await createNewMint(
+    connection,
+    user, // We'll pay the fees
+    user.publicKey, // We're the mint authority
+    user.publicKey, // And the freeze authority >:)
+    2 // Only two decimals!
+  );
 
-  // Bonus Challenge!
-  // Figure out how to transfer and burn tokens
-  // Hint: use the transfer method and the burn method
-  // Transfer: https://solana-labs.github.io/solana-program-library/token/js/functions/transfer.html
-  // Burn: https://solana-labs.github.io/solana-program-library/token/js/functions/burn.html
+  // createTokenAccount
+  const tokenAccount = await createTokenAccount(
+    connection,
+    user,
+    mint,
+    user.publicKey // Associating our address with the token account
+  );
+
+  // mintTokens
+  // Mint 100 tokens to our address
+  await mintTokens(
+    connection,
+    user,
+    mint,
+    tokenAccount.address,
+    user.publicKey,
+    100
+  );
+
+  const receiver = web3.Keypair.generate().publicKey;
+  const receiverTokenAccount = await createTokenAccount(
+    connection,
+    user,
+    mint,
+    receiver
+  );
+
+  await transferTokens(
+    connection,
+    user,
+    tokenAccount.address,
+    receiverTokenAccount.address,
+    user.publicKey,
+    50
+  );
+
+  await burnTokens(connection, user, tokenAccount.address, mint, user, 25);
 };
 
 main()
