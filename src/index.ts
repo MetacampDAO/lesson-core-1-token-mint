@@ -43,7 +43,10 @@ const main = async () => {
     100
   );
 
+  // Creating a new user to send to
   const receiver = web3.Keypair.generate().publicKey;
+
+  // Creating a token account for the new user
   const receiverTokenAccount = await createTokenAccount(
     connection,
     user,
