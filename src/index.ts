@@ -53,15 +53,41 @@ const main = async () => {
   // Bonus Challenge!
   // Figure out how to transfer and burn tokens
   // Hint 1: You need to create a new user to transfer to
+  const reciever = web3.Keypair.generate().publicKey;
+
   // Hint 2: The new user need to have a token account
+  const recieverTokenAccount = await token.getOrCreateAssociatedTokenAccount(
+    connection,
+    user,
+    tokenMint,
+    reciever
+  );
 
   // Hint 3: Use the transfer method and the burn method
   // Transfer: https://solana-labs.github.io/solana-program-library/token/js/functions/transfer.html
   // Burn: https://solana-labs.github.io/solana-program-library/token/js/functions/burn.html
 
   // TRANSFER Tx
+  const transferTxSig = await token.transfer(
+    connection,
+    user,
+    tokenAccount.address,
+    recieverTokenAccount.address,
+    user,
+    50 * 10 ** mintInfo.decimals
+  );
+  console.log("SIGNATURE: ", transferTxSig);
 
   // BURN Tx
+  const burnTxSig = await token.burn(
+    connection,
+    user,
+    tokenAccount.address,
+    tokenMint,
+    user,
+    25 * 10 ** mintInfo.decimals
+  );
+  console.log("SIGNATURE: ", burnTxSig);
 };
 
 main()
